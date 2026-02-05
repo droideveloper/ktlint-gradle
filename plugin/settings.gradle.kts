@@ -1,4 +1,5 @@
 pluginManagement {
+    includeBuild("build-logic")
     plugins {
         // We just always pull the latest published version of the plugin
         // Downside is that the build is now not 100% reproducible
