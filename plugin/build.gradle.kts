@@ -16,6 +16,7 @@ plugins {
     id("com.gradleup.shadow")
     id("com.github.breadmoirai.github-release")
     id("com.netflix.nebula.release")
+    id("org.jlleitschuh.gradle.ktlint.local.publish") version "unspecified"
 }
 
 val pluginGroup = "org.jlleitschuh.gradle"
@@ -120,6 +121,8 @@ tasks.withType<Test> {
     dependsOn("publishToMavenLocal")
     maxParallelForks = 6 // no point in this being higher than the number of gradle workers
 
+    project.version = "14.0.2" // bumped of current version
+
     // Set the system property for the project version to be used in the tests
     systemProperty("project.version", project.version.toString())
     testLogging {
@@ -143,6 +146,32 @@ tasks.withType<Test> {
     }
 }
 
+localPublication {
+    artifactKey = "ktlint.gradle-plugin"
+    metadata {
+        name = "ktlint"
+        groupId = pluginGroup
+        description = "ktlint gradle plugin"
+        url = "https://github.com/JLLeitschuh/ktlint-gradle"
+    }
+    license {
+        name = "The Apache Software License, Version 2.0"
+        url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+        distribution = "repo"
+    }
+    developer {
+        id = "https://github.com/JLLeitschuh"
+        name = "JLLeitschuh"
+        organization = "JLLeitschuh"
+        organizationUrl = "https://github.com/JLLeitschuh/ktlint-gradle"
+    }
+    scm {
+        connection = "scm:git:git@github.com:JLLeitschuh/ktlint-gradle.git"
+        developerConnection = "scm:git:git@github.com:JLLeitschuh/ktlint-gradle.git"
+        url = "https://github.com/JLLeitschuh/ktlint-gradle"
+    }
+}
+
 val shadowJarTask = tasks.named<ShadowJar>("shadowJar") {
     manifest {
         attributes(
@@ -157,7 +186,7 @@ val shadowJarTask = tasks.named<ShadowJar>("shadowJar") {
     relocate("org.apache.commons.io", "$pluginGroup.shadow.org.apache.commons.io")
     relocate("org.eclipse.jgit", "$pluginGroup.shadow.org.eclipse.jgit")
     relocate("org.slf4j", "$pluginGroup.shadow.org.slf4j")
-    archiveClassifier.set(null)
+    archiveClassifier.set(null as String?)
 }
 
 // Add shadow jar to the Gradle module metadata api and runtime configurations
@@ -174,6 +203,7 @@ tasks.whenTaskAdded {
 
 tasks.named("check") {
     dependsOn(tasks.named("assemble"))
+    dependsOn(tasks.named("collectRepository"))
 }
 
 /**

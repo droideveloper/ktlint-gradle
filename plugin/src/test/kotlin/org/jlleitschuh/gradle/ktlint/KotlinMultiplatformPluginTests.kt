@@ -5,6 +5,7 @@ import org.gradle.util.GradleVersion
 import org.jlleitschuh.gradle.ktlint.tasks.GenerateReportsTask
 import org.jlleitschuh.gradle.ktlint.testdsl.CommonTest
 import org.jlleitschuh.gradle.ktlint.testdsl.GradleTestVersions
+import org.jlleitschuh.gradle.ktlint.testdsl.TestProject.Companion.CLEAN_COMMON_SOURCES_FILE
 import org.jlleitschuh.gradle.ktlint.testdsl.build
 import org.jlleitschuh.gradle.ktlint.testdsl.project
 import org.jlleitschuh.gradle.ktlint.testdsl.projectSetup
@@ -33,10 +34,12 @@ class KotlinMultiplatformPluginTests : AbstractPluginTest() {
         )
     }
 
-    @DisplayName("Should add check on all sources")
+    @DisplayName("Should NOT add check on sources if they have no source file")
     @CommonTest
     fun addCheckTasks(gradleVersion: GradleVersion) {
         project(gradleVersion, projectSetup = multiplatformProjectSetup()) {
+            withCleanSources(filePath = CLEAN_COMMON_SOURCES_FILE)
+
             build("-m", CHECK_PARENT_TASK_NAME) {
                 val ktlintTasks = output.lineSequence().toList()
 
@@ -49,7 +52,7 @@ class KotlinMultiplatformPluginTests : AbstractPluginTest() {
                     )
                 }
                 assertThat(ktlintTasks).anySatisfy {
-                    assertThat(it).contains(
+                    assertThat(it).doesNotContain(
                         GenerateReportsTask.generateNameForSourceSets(
                             "JsMain",
                             GenerateReportsTask.LintType.CHECK
@@ -57,7 +60,7 @@ class KotlinMultiplatformPluginTests : AbstractPluginTest() {
                     )
                 }
                 assertThat(ktlintTasks).anySatisfy {
-                    assertThat(it).contains(
+                    assertThat(it).doesNotContain(
                         GenerateReportsTask.generateNameForSourceSets(
                             "JvmMain",
                             GenerateReportsTask.LintType.CHECK

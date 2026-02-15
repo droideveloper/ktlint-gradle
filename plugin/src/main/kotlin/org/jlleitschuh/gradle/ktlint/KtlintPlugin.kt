@@ -67,34 +67,18 @@ open class KtlintPlugin : Plugin<Project> {
         val multiplatformExtension = target.extensions.getByType(KotlinMultiplatformExtension::class.java)
 
         multiplatformExtension.sourceSets.all(fun(sourceSet) {
-            val checkTask = createCheckTask(
-                this,
-                sourceSet.name,
-                sourceSet.kotlin.sourceDirectories
-            )
-            val generateReportsCheckTask = createGenerateReportsTask(
-                this,
-                checkTask,
-                GenerateReportsTask.LintType.CHECK,
-                sourceSet.name
-            )
+            val directories = sourceSet.kotlin.sourceDirectories
+            val shouldCreateTaskForSourceSet = directories.any { dir ->
+                val children = dir.list()
+                children != null && children.isNotEmpty()
+            }
 
-            addGenerateReportsTaskToProjectMetaCheckTask(generateReportsCheckTask)
-            setCheckTaskDependsOnGenerateReportsTask(generateReportsCheckTask)
-
-            val formatTask = createFormatTask(
-                this,
-                sourceSet.name,
-                sourceSet.kotlin.sourceDirectories
-            )
-            val generateReportsFormatTask = createGenerateReportsTask(
-                this,
-                formatTask,
-                GenerateReportsTask.LintType.FORMAT,
-                sourceSet.name
-            )
-
-            addGenerateReportsTaskToProjectMetaFormatTask(generateReportsFormatTask)
+            if (shouldCreateTaskForSourceSet) {
+                applyKtlintMultiplatformSourceSet(
+                    sourceSet.name,
+                    directories
+                )
+            }
         })
 
         multiplatformExtension.targets.all(fun(kotlinTarget) {
@@ -102,6 +86,40 @@ open class KtlintPlugin : Plugin<Project> {
                 applyKtLintToAndroid()
             }
         })
+    }
+
+    private fun PluginHolder.applyKtlintMultiplatformSourceSet(
+        sourceSetName: String,
+        directories: Iterable<*>
+    ) {
+        val checkTask = createCheckTask(
+            this,
+            sourceSetName,
+            directories
+        )
+        val generateReportsCheckTask = createGenerateReportsTask(
+            this,
+            checkTask,
+            GenerateReportsTask.LintType.CHECK,
+            sourceSetName
+        )
+
+        addGenerateReportsTaskToProjectMetaCheckTask(generateReportsCheckTask)
+        setCheckTaskDependsOnGenerateReportsTask(generateReportsCheckTask)
+
+        val formatTask = createFormatTask(
+            this,
+            sourceSetName,
+            directories
+        )
+        val generateReportsFormatTask = createGenerateReportsTask(
+            this,
+            formatTask,
+            GenerateReportsTask.LintType.FORMAT,
+            sourceSetName
+        )
+
+        addGenerateReportsTaskToProjectMetaFormatTask(generateReportsFormatTask)
     }
 
     private fun PluginHolder.applyKtLint(): (Plugin<in Any>) -> Unit = {

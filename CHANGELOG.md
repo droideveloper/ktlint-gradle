@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+- Fix multiplatform build for all targets without sourceSets containing any `*.kt` [#950](https://github.com/JLLeitschuh/ktlint-gradle/issues/950)
 
 - Add support for Android projects with new DSL i.e. built-in Kotlin [#1016](https://github.com/JLLeitschuh/ktlint-gradle/pull/1016)
 
