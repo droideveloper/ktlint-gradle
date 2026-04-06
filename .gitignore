@@ -163,3 +163,8 @@ gradle-app.setting
 
 .gradle-test-kit
 .obsidian
+
+# mac osx
+.DS_Store
+*/.DS_Store
+**/*/.DS_Store
