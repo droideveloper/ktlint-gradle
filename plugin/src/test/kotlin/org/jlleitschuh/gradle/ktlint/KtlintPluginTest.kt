@@ -1,6 +1,7 @@
 package org.jlleitschuh.gradle.ktlint
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.hasOutcome
 import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.util.GradleVersion
 import org.jlleitschuh.gradle.ktlint.tasks.GenerateBaselineTask
@@ -212,15 +213,46 @@ class KtlintPluginTest : AbstractPluginTest() {
             buildGradle.appendText(
                 """
 
-                ktlint.version = "0.35.0"
+                ktlint.version = "1.0.0"
                 """.trimIndent()
             )
 
             build(":dependencies") {
                 assertThat(output).contains(
                     "$KTLINT_CONFIGURATION_NAME - $KTLINT_CONFIGURATION_DESCRIPTION${System.lineSeparator()}" +
-                        "\\--- com.pinterest:ktlint:0.35.0${System.lineSeparator()}"
+                        "+--- com.pinterest.ktlint:ktlint-cli:1.0.0${System.lineSeparator()}"
                 )
+            }
+        }
+    }
+
+    @DisplayName("Should apply KtLint version from ktlint-plugins.properties")
+    @CommonTest
+    fun `ktlint version from properties`(gradleVersion: GradleVersion) {
+        project(gradleVersion) {
+            withCleanSources()
+            val propsFile = projectPath.resolve("ktlint-plugins.properties")
+            propsFile.createNewFile()
+            propsFile.writeText("""ktlint-version=1.0.0""")
+
+            build(":dependencies") {
+                assertThat(output).contains(
+                    "$KTLINT_CONFIGURATION_NAME - $KTLINT_CONFIGURATION_DESCRIPTION${System.lineSeparator()}" +
+                        "+--- com.pinterest.ktlint:ktlint-cli:1.0.0${System.lineSeparator()}"
+                )
+            }
+            build(":$CHECK_PARENT_TASK_NAME") {
+                assertThat(task(":$mainSourceSetCheckTaskName"))
+                    .`as`("task is cacheable")
+                    .hasOutcome(TaskOutcome.SUCCESS)
+            }
+            propsFile.delete()
+            propsFile.createNewFile()
+            propsFile.writeText("""ktlint-version=1.1.0""")
+            build(":$CHECK_PARENT_TASK_NAME") {
+                assertThat(task(":$mainSourceSetCheckTaskName"))
+                    .`as`("changing ktlint version causes cache to clear")
+                    .hasOutcome(TaskOutcome.SUCCESS)
             }
         }
     }
